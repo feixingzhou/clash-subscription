@@ -1,4 +1,4 @@
-name: Sync Latest Clash Subscription
+name: Sync Clash Subscription
 
 on:
   schedule:

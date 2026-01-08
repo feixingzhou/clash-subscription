@@ -1,0 +1,39 @@
+name: Sync Latest Clash Subscription
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Fetch latest clash file
+        run: |
+          REPO="free-nodes/clashfree"
+          API_URL="https://api.github.com/repos/$REPO/contents"
+
+          FILE=$(curl -s $API_URL \
+            | jq -r '.[].name' \
+            | grep -E '^clash[0-9]{8}\.yml$' \
+            | sort \
+            | tail -n 1)
+
+          echo "Latest file: $FILE"
+
+          RAW_URL="https://raw.githubusercontent.com/$REPO/main/$FILE"
+          curl -s $RAW_URL -o clash_latest.yml
+
+      - name: Commit & push if changed
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add clash_latest.yml
+          git diff --cached --quiet || git commit -m "Update latest clash subscription"
+          git push
